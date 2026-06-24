@@ -198,6 +198,7 @@ route_type は通常 3（バス）を使用してください。
             </div>
             <div id="stop-list" class="stop-list"></div>
             <div class="stop-list-actions">
+              <button id="reset-all-stops-btn" class="btn-danger-outline">🗑️ 全停留所の座標をリセット</button>
               <button id="dl-stops-csv-btn" class="btn-secondary">⬇️ 補完済み stops.csv をダウンロード</button>
               <button class="btn-inline-tab" data-goto="tab-step4">STEP 4 へ →</button>
             </div>
@@ -220,16 +221,16 @@ route_type は通常 3（バス）を使用してください。
 
         <div class="agency-form">
           <div class="form-row">
-            <label class="form-label" for="agency-id">agency_id <span class="required">必須</span></label>
-            <input type="text" id="agency-id" class="form-input" placeholder="例: agency_001">
+            <label class="form-label" for="agency-id">agency_id</label>
+            <input type="text" id="agency-id" class="form-input" placeholder="空欄の場合: A001">
           </div>
           <div class="form-row">
-            <label class="form-label" for="agency-name">agency_name <span class="required">必須</span></label>
-            <input type="text" id="agency-name" class="form-input" placeholder="例: ○○バス株式会社">
+            <label class="form-label" for="agency-name">agency_name</label>
+            <input type="text" id="agency-name" class="form-input" placeholder="空欄の場合: 未設定事業者">
           </div>
           <div class="form-row">
-            <label class="form-label" for="agency-url">agency_url <span class="required">必須</span></label>
-            <input type="url" id="agency-url" class="form-input" placeholder="例: https://example.com">
+            <label class="form-label" for="agency-url">agency_url</label>
+            <input type="url" id="agency-url" class="form-input" placeholder="空欄の場合: https://example.com">
           </div>
           <div class="form-row">
             <label class="form-label" for="agency-phone">agency_phone</label>
@@ -371,7 +372,7 @@ route_type は通常 3（バス）を使用してください。
         <div class="manual-section">
           <h2 class="manual-h2">STEP 4: GTFS-JP ZIP生成</h2>
           <ul class="manual-list">
-            <li>agency_id・agency_name・agency_url は必須です。</li>
+            <li>agency_id・agency_name・agency_url は空欄の場合デフォルト値が使用されます。</li>
             <li>feed_info（任意）を展開して、フィード情報を入力できます。</li>
             <li>「GTFS-JP ZIP を生成」ボタンを押すとデータを検査してZIPを生成します。</li>
             <li>生成されたZIPをダウンロードしてご利用ください。</li>

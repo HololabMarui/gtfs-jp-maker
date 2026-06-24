@@ -722,12 +722,7 @@ function initStep4() {
       return;
     }
 
-    const agencyName = v('agency-name');
-    const agencyUrl  = v('agency-url');
-    const agencyId   = v('agency-id');
-    if (!agencyName) { alert('agency_name を入力してください。'); return; }
-    if (!agencyUrl)  { alert('agency_url を入力してください。'); return; }
-    if (!agencyId)   { alert('agency_id を入力してください。'); return; }
+    // agency fields are optional — defaults are applied in makeAgencyTxt()
 
     generateBtn.disabled = true;
     if (makerLog) { makerLog.classList.remove('hidden'); makerLog.innerHTML = ''; }

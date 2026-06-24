@@ -106,6 +106,34 @@
     }
   }
 
+  function resetStop(stopId) {
+    const stop = getStops().find(s => s.stop_id === stopId);
+    if (!stop) return;
+    stop.stop_lat = '';
+    stop.stop_lon = '';
+    if (markers[stopId]) {
+      map.removeLayer(markers[stopId]);
+      delete markers[stopId];
+    }
+    if (selectedStopId === stopId) updateClickHint();
+    renderStopList();
+    updatePolyline();
+    updateCountInfo();
+  }
+
+  function resetAllStops() {
+    const stops = getStops();
+    if (!stops.length) return;
+    if (!confirm(`全${stops.length}件の停留所の座標をリセットします。よろしいですか？`)) return;
+    stops.forEach(s => { s.stop_lat = ''; s.stop_lon = ''; });
+    Object.values(markers).forEach(m => map.removeLayer(m));
+    markers = {};
+    updatePolyline();
+    renderStopList();
+    updateCountInfo();
+    updateClickHint();
+  }
+
   function renderStopList() {
     const stops = getStops();
     const container = document.getElementById('stop-list');
@@ -120,6 +148,9 @@
       const lat = parseFloat(stop.stop_lat);
       const lon = parseFloat(stop.stop_lon);
       const coordText = ok ? `${lat.toFixed(5)}, ${lon.toFixed(5)}` : '未設定';
+      const resetBtn = ok
+        ? `<button class="stop-reset-btn" data-reset-id="${esc(stop.stop_id)}" title="この停留所の座標をリセット">✕</button>`
+        : '';
       html += `<div class="stop-list-item${isSelected ? ' selected' : ''}" data-stop-id="${esc(stop.stop_id)}">
         <span class="stop-status-icon">${ok ? '✅' : '⚠️'}</span>
         <div class="stop-info">
@@ -127,13 +158,16 @@
           <div class="stop-id-text">${esc(stop.stop_id)}</div>
           <div class="stop-coord-text${ok ? '' : ' no-coord'}">${coordText}</div>
         </div>
+        ${resetBtn}
       </div>`;
     });
 
     container.innerHTML = html || '<div class="no-stops">停留所データがありません。STEP 2でstops.csvを読み込んでください。</div>';
 
     container.querySelectorAll('.stop-list-item').forEach(el => {
-      el.addEventListener('click', () => {
+      el.addEventListener('click', e => {
+        // リセットボタンのクリックは選択に影響しない
+        if (e.target.closest('.stop-reset-btn')) return;
         selectedStopId = el.dataset.stopId;
         renderStopList();
         updateMarkerStyles();
@@ -143,6 +177,13 @@
           map.panTo([parseFloat(stop.stop_lat), parseFloat(stop.stop_lon)]);
           if (markers[selectedStopId]) markers[selectedStopId].openPopup();
         }
+      });
+    });
+
+    container.querySelectorAll('.stop-reset-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        resetStop(btn.dataset.resetId);
       });
     });
   }
@@ -234,6 +275,7 @@
   });
 
   document.getElementById('dl-stops-csv-btn')?.addEventListener('click', downloadStopsCsv);
+  document.getElementById('reset-all-stops-btn')?.addEventListener('click', resetAllStops);
 
   window.stopMapEditor = { render, initMap };
 })();
