@@ -5,6 +5,8 @@
   let routeLine = null;
   let selectedStopId = null;
   let filterNoCoord = false;
+  let kmlLayer = null;
+  let kmlVisible = true;
 
   function getStops() { return window.makerData && window.makerData.stops || []; }
 
@@ -233,6 +235,89 @@
     updateClickHint();
   }
 
+  // ---------- KML / KMZ ----------
+
+  async function loadKmlFile(file) {
+    let kmlText;
+    if (file.name.toLowerCase().endsWith('.kmz')) {
+      const buf = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(buf);
+      const kmlEntry = Object.values(zip.files).find(f => f.name.toLowerCase().endsWith('.kml') && !f.dir);
+      if (!kmlEntry) { alert('KMZ 内に KML ファイルが見つかりません。'); return; }
+      kmlText = await kmlEntry.async('string');
+    } else {
+      kmlText = await file.text();
+    }
+    applyKml(kmlText, file.name);
+  }
+
+  function applyKml(kmlText, filename) {
+    if (!map) return;
+    clearKmlLayer();
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(kmlText, 'text/xml');
+    const geojson = toGeoJSON.kml(doc);
+
+    kmlLayer = L.geoJSON(geojson, {
+      style: { color: '#e11d48', weight: 2.5, opacity: 0.75, fillColor: '#e11d48', fillOpacity: 0.12 },
+      pointToLayer: (_, latlng) => L.circleMarker(latlng, {
+        radius: 5, fillColor: '#e11d48', color: '#fff', weight: 1.5, opacity: 1, fillOpacity: 0.85
+      }),
+      onEachFeature: (feature, layer) => {
+        const name = feature.properties?.name || feature.properties?.Name || '';
+        const desc = feature.properties?.description || '';
+        if (name || desc) layer.bindPopup(`<b>${esc(name)}</b>${desc ? '<br><small>' + desc + '</small>' : ''}`);
+      }
+    }).addTo(map);
+
+    kmlVisible = true;
+
+    const status = document.getElementById('kml-status');
+    const toggleBtn = document.getElementById('kml-toggle-btn');
+    const clearBtn = document.getElementById('kml-clear-btn');
+    if (status) status.textContent = filename;
+    toggleBtn?.classList.remove('hidden');
+    clearBtn?.classList.remove('hidden');
+    if (toggleBtn) { toggleBtn.textContent = '👁'; toggleBtn.title = '非表示にする'; }
+
+    try {
+      const bounds = kmlLayer.getBounds();
+      if (bounds.isValid() && !getStops().some(hasValidCoord)) {
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+    } catch (_) {}
+  }
+
+  function clearKmlLayer() {
+    if (kmlLayer) { map.removeLayer(kmlLayer); kmlLayer = null; }
+    kmlVisible = false;
+    const status = document.getElementById('kml-status');
+    const toggleBtn = document.getElementById('kml-toggle-btn');
+    const clearBtn = document.getElementById('kml-clear-btn');
+    if (status) status.textContent = '';
+    toggleBtn?.classList.add('hidden');
+    clearBtn?.classList.add('hidden');
+    const input = document.getElementById('kml-file-input');
+    if (input) input.value = '';
+  }
+
+  function toggleKmlVisibility() {
+    if (!kmlLayer) return;
+    const toggleBtn = document.getElementById('kml-toggle-btn');
+    if (kmlVisible) {
+      map.removeLayer(kmlLayer);
+      kmlVisible = false;
+      if (toggleBtn) { toggleBtn.textContent = '🚫'; toggleBtn.title = '表示する'; toggleBtn.classList.add('off'); }
+    } else {
+      kmlLayer.addTo(map);
+      kmlVisible = true;
+      if (toggleBtn) { toggleBtn.textContent = '👁'; toggleBtn.title = '非表示にする'; toggleBtn.classList.remove('off'); }
+    }
+  }
+
+  // ---------- CSV download ----------
+
   function downloadStopsCsv() {
     const stops = getStops();
     if (!stops.length) { alert('停留所データがありません'); return; }
@@ -276,6 +361,13 @@
 
   document.getElementById('dl-stops-csv-btn')?.addEventListener('click', downloadStopsCsv);
   document.getElementById('reset-all-stops-btn')?.addEventListener('click', resetAllStops);
+
+  document.getElementById('kml-file-input')?.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) loadKmlFile(file);
+  });
+  document.getElementById('kml-toggle-btn')?.addEventListener('click', toggleKmlVisibility);
+  document.getElementById('kml-clear-btn')?.addEventListener('click', clearKmlLayer);
 
   window.stopMapEditor = { render, initMap };
 })();

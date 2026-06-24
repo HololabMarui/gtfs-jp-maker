@@ -204,6 +204,13 @@ route_type は通常 3（バス）を使用してください。
             </div>
           </div>
           <div class="stop-map-panel">
+            <div class="kml-toolbar">
+              <label class="kml-import-btn" for="kml-file-input">📂 KML / KMZ を読み込む</label>
+              <input type="file" id="kml-file-input" accept=".kml,.kmz" hidden>
+              <span id="kml-status" class="kml-status"></span>
+              <button id="kml-toggle-btn" class="kml-action-btn hidden" title="表示/非表示">👁</button>
+              <button id="kml-clear-btn" class="kml-action-btn hidden" title="オーバーレイを削除">✕</button>
+            </div>
             <div id="map-click-hint" class="map-click-hint hidden">📍 地図をクリックして選択中の停留所を配置</div>
             <div id="stop-map" class="stop-map"></div>
           </div>
@@ -399,6 +406,7 @@ route_type は通常 3（バス）を使用してください。
   <script src="lib/jszip.min.js"></script>
   <script src="lib/papaparse.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
   <script src="gtfs-maker.js"></script>
   <script src="stop-map-editor.js"></script>
 </body>
